@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Kontrak Solidity — Lengkap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 1.7rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #a0aec0;
+            margin-bottom: 25px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .card h2 {
+            font-size: 1.05rem;
+            margin-bottom: 15px;
+            color: #93c5fd;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            background: #0f1629;
+            border: 2px solid #2d3748;
+            border-radius: 8px;
+            color: #e2e8f0;
+            margin-bottom: 12px;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        textarea {
+            min-height: 160px;
+            font-family: 'Consolas', monospace;
+            resize: vertical;
+        }
+        button {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-audit {
+            background: linear-gradient(90deg, #3182ce, #2b6cb0);
+            color: white;
+            margin-bottom: 8px;
+        }
+        .btn-audit:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(49,130,206,0.4); }
+        .btn-simpan {
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: white;
+            display: none;
+            margin-bottom: 8px;
+        }
+        .btn-simpan:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+        .btn-hapus {
+            background: #dc2626;
+            color: white;
+            padding: 8px 12px;
+            font-size: 13px;
+            width: auto;
+        }
+        .btn-reset {
+            background: #374151;
+            color: white;
+            margin-top: 5px;
+        }
+        .section-title {
+            font-size: 0.95rem;
+            color: #9ca3af;
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #374151;
+        }
+        .result-section { display: none; }
+        .score-box {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .issue {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+        .kritis { background: rgba(248,113,113,0.15); border-color: #f87171; color: #fca5a5; }
+        .tinggi { background: rgba(251,146,60,0.15); border-color: #fb923c; color: #fdba74; }
+        .sedang { background: rgba(250,204,21,0.15); border-color: #facc15; color: #fde047; }
+        .aman { background: rgba(74,222,128,0.15); border-color: #4ade80; color: #86efac; }
+        .loading { text-align: center; padding: 30px; display: none; }
+        .spinner {
+            border: 3px solid #2d3748;
+            border-top: 3px solid #4299e1;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .log-item {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid #4299e1;
+        }
+        .log-tgl { font-size: 12px; color: #9ca3af; margin-bottom: 4px; }
+        .log-nama { font-weight: 600; margin-bottom: 4px; }
+        .log-skor { font-size: 13px; }
+        .log-actions { margin-top: 8px; display: flex; gap: 8px; }
+        .log-btn { padding: 4px 10px; font-size: 12px; width: auto; background: #4b5563; color: white; border-radius: 4px; }
+        .empty-log { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Audit Kontrak Solidity</h1>
+        <p class="subtitle">Pemeriksaan Keamanan • Hasil Tersimpan • Riwayat Audit</p>
+
+        <!-- 📄 INFORMASI DOKUMEN -->
+        <div class="card">
+            <h2>📄 Informasi Audit</h2>
+            <div class="grid-2">
+                <input type="text" id="namaProyek" placeholder="Nama Proyek / Kontrak">
+                <input type="text" id="namaAuditor" placeholder="Nama Auditor">
+            </div>
+            <div class="grid-2">
+                <input type="text" id="alamatKontrak" placeholder="Alamat Kontrak (Opsional)">
+                <input type="text" id="jaringan" placeholder="Jaringan (BSC/Ethereum/Polygon)">
+            </div>
+        </div>
+
+        <!-- 📝 KODE & TOMBOL -->
+        <div class="card">
+            <h2>📝 Kode Kontrak Solidity</h2>
+            <textarea id="kodeKontrak" placeholder="Tempel kode kontrak di sini..."></textarea>
+            
+            <button id="btnAudit" class="btn-audit" onclick="mulaiAudit()">🚀 Mulai Audit</button>
+            <button id="btnSimpan" class="btn-simpan" onclick="simpanLaporan()">📄 Simpan Laporan (.txt)</button>
+            <button class="btn-reset" onclick="resetForm()">🔄 Form Baru</button>
+        </div>
+
+        <!-- ⏳ LOADING -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Sedang menganalisis kode...</p>
+        </div>
+
+        <!-- ✅ HASIL AUDIT -->
+        <div class="card result-section" id="hasilSection">
+            <h2>✅ Hasil Pemeriksaan</h2>
+            <div class="score-box">
+                <p style="color:#9ca3af; font-size:14px;">Skor Keamanan</p>
+                <div class="score-value" id="skor">0/100</div>
+                <p id="statusSkor" style="margin-top:8px; font-weight:500;"></p>
+                <p style="color:#6b7280; font-size:12px; margin-top:5px;" id="tanggalAudit"></p>
+            </div>
+            <h3 class="section-title">📋 Detail Pemeriksaan</h3>
+            <div id="daftarHasil"></div>
+        </div>
+
+        <!-- 📋 RIWAYAT / LOG AUDIT -->
+        <div class="card">
+            <h2>📋 Riwayat Audit Tersimpan</h2>
+            <div id="daftarLog">
+                <div class="empty-log">Belum ada riwayat audit.<br>Lakukan audit pertama, hasil akan otomatis tersimpan di sini.</div>
+            </div>
+            <button style="margin-top:12px; background: #4b5563;" onclick="hapusSemuaLog()">🗑️ Kosongkan Riwayat</button>
+        </div>
+
+        <!-- ⚠️ CATATAN -->
+        <div class="footer">
+            <strong>⚠️ Catatan:</strong> Alat ini pemeriksaan dasar saja. Untuk dana nyata, gunakan audit profesional.<br>
+            Data riwayat tersimpan di browser perangkat kamu — tidak dikirim ke server mana pun.
+        </div>
+    </div>
+
+    <script>
+        let hasilSaatIni = null;
+
+        // === DAFTAR PEMERIKSAAN ===
+        const daftarCek = [
+            {
+                nama: 'Versi Solidity',
+                cek: (k) => {
+                    const p = k.match(/pragma\s+solidity\s*([^;]+);/);
+                    const v8 = /pragma\s+solidity\s*[^;]*0\.8/.test(k);
+                    if (!p) return {ok:false, lvl:'kritis', msg:'Tidak ada deklarasi versi Solidity!'};
+                    if (!v8) return {ok:false, lvl:'sedang', msg:`Versi: ${p[1]} — disarankan 0.8.x ke atas`};
+                    return {ok:true, msg:`Versi: ${p[1]} ✅`};
+                }
+            },
+            {
+                nama: 'Fungsi Berbahaya',
+                cek: (k) => {
+                    const m = [];
+                    if (/selfdestruct\s*\(/.test(k)||/suicide\s*\(/.test(k)) m.push('• selfdestruct — dapat menghancurkan kontrak');
+                    if (/tx\.origin/.test(k)) m.push('• tx.origin — rentan phishing, gunakan msg.sender');
+                    if (/delegatecall\s*\(/.test(k)) m.push('• delegatecall — periksa dengan teliti');
+                    if (/block\.timestamp/.test(k)) m.push('• block.timestamp — bisa dimanipulasi penambang');
+                    if (!m.length) return {ok:true, msg:'Tidak ada fungsi berbahaya ✅'};
+                    return {ok:false, lvl:m.some(x=>x.includes('selfdestruct')||x.includes('tx.origin'))?'kritis':'tinggi', msg:m.join('\n')};
+                }
+            },
+            {
+                nama: 'Kontrol Akses',
+                cek: (k) => {
+                    const own = /address\s+(public\s+)?owner/i.test(k);
+                    const oo = /modifier\s+onlyOwner/.test(k)||/onlyOwner\s*\(/.test(k);
+                    if (!own) return {ok:false, lvl:'sedang', msg:'Tidak ditemukan alamat owner'};
+                    if (!oo) return {ok:false, lvl:'tinggi', msg:'Ada owner tapi tidak ada modifier onlyOwner'};
+                    return {ok:true, msg:'Kontrol akses aman ✅'};
+                }
+            },
+            {
+                nama: 'Pengecekan Alamat Kosong',
+                cek: (k) => {
+                    const hasAddrParam = /function\s+\w+\s*\([^)]*address[^)]*\)/.test(k);
+                    const hasZeroCheck = /require\s*\(\s*[a-zA-Z_]+\s*!=\s*address\s*\(\s*0\s*\)/.test(k);
+                    if (hasAddrParam && !hasZeroCheck) return {ok:false, lvl:'sedang', msg:'Tambahkan pengecekan: require(addr != address(0))'};
+                    return {ok:true, msg:'Pengecekan alamat aman ✅'};
+                }
+            },
+            {
+                nama: 'Keamanan Penarikan Dana',
+                cek: (k) => {
+                    const wd = /withdraw|withdrawal/.test(k.toLowerCase());
+                    const xfer = /\.transfer\s*\(|\.call\s*\(.*value\s*=/.test(k));
+                    if (wd && xfer) return {ok:true, msg:'Fungsi penarikan terdeteksi — pastikan gunakan pola Checks-Effects-Interactions ✅'};
+                    return {ok:true, msg:'Tidak ada fungsi penarikan dana ✅'};
+                }
+            }
+        ];
+
+        // === MUAT RIWAYAT SAAT BUKA HALAMAN ===
+        document.addEventListener('DOMContentLoaded', tampilkanLog);
+
+        // === MULAI AUDIT ===
+        async function mulaiAudit() {
+            const kode = document.getElementById('kodeKontrak').value.trim();
+            const proyek = document.getElementById('namaProyek').value.trim() || 'Tanpa Nama';
+            const auditor = document.getElementById('namaAuditor').value.trim() || 'Anonim';
+            const alamat = document.getElementById('alamatKontrak').value.trim() || '-';
+            const jaringan = document.getElementById('jaringan').value.trim() || '-';
+
+            if (!kode) { alert('⚠️ Tempel kode kontrak terlebih dahulu!'); return; }
+
+            const btn = document.getElementById('btnAudit');
+            const btnSimpan = document.getElementById('btnSimpan');
+            const loading = document.getElementById('loading');
+            const hasilSection = document.getElementById('hasilSection');
+            const daftarHasil = document.getElementById('daftarHasil');
+            const skorEl = document.getElementById('skor');
+            const statusSkor = document.getElementById('statusSkor');
+            const tglEl = document.getElementById('tanggalAudit');
+
+            btn.disabled = true;
+            btnSimpan.style.display = 'none';
+            loading.style.display = 'block';
+            hasilSection.style.display = 'none';
+            daftarHasil.innerHTML = '';
+
+            await new Promise(r => setTimeout(r, 1000));
+
+            let skor = 100;
+            let detailTeks = [];
+            const tglSekarang = new Date().toLocaleString('id-ID', {dateStyle:'full', timeStyle:'short'});
+
+            loading.style.display = 'none';
+            hasilSection.style.display = 'block';
+            tglEl.textContent = `Tanggal: ${tglSekarang}`;
+
+            daftarCek.forEach(item => {
+                const h = item.cek(kode);
+                if (!h.ok) {
+                    if (h.lvl==='kritis') skor-=25;
+                    else if (h.lvl==='tinggi') skor-=15;
+                    else if (h.lvl==='sedang') skor-=8;
+                }
+                skor = Math.max(0, skor);
+                const ikon = h.ok?'✅':h.lvl==='kritis'?'🔴':h.lvl==='tinggi'?'🟠':'🟡';
+                daftarHasil.innerHTML += `
+                    <div class="issue ${h.ok?'aman':h.lvl}">
+                        <strong>${ikon} ${item.nama}</strong><br>
+                        <span style="white-space:pre-line; font-size:13px; margin-top:4px; display:block;">${h.msg}</span>
+                    </div>`;
+                detailTeks.push(`${ikon} ${item.nama}\n${h.msg}`);
+            });
+
+            let status = '';
+            if (skor>=80) { status='✅ Cukup Aman'; skorEl.style.color='#4ade80'; }
+            else if (skor>=60) { status='⚠️ Perlu Perbaikan'; skorEl.style.color='#facc15'; }
+            else { status='🔴 Berisiko Tinggi'; skorEl.style.color='#f87171'; }
+            skorEl.textContent = `${skor}/100`;
+            statusSkor.textContent = status;
+
+            // Simpan hasil saat ini
+            hasilSaatIni = {
+                id: Date.now(),
+                tanggal
